@@ -39,7 +39,7 @@ class GoogleAdmin:
                 maxResults=100,  # Adjust the number of results per page as needed
                 pageToken=page_token,
                 query = urlQuery
-                # orgUnitPath='/DEVICES/Chromebooks/ChromeOS Flex Laptops'
+               
             ).execute()
 
             # Process the devices on the current page
