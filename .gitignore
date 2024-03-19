@@ -26,7 +26,9 @@ share/python-wheels/
 *.egg
 MANIFEST
 .DS_Store
-tests/*
+tests/
+include/
+bin/
 
 # PyInstaller
 #  Usually these files are written by a python script from a template

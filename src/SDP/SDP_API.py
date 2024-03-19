@@ -10,6 +10,7 @@ import requests
 '''
 method = ["POST","GET","NO_QUERY_PARAMS"]
 
+endpoints = ["requesters", "products", "workstations"]
 
 '''
     list products that are in the name field of the request, e.g list all Dell XPS 13's only
@@ -43,7 +44,7 @@ def checkProduct(product, session) -> str:
         criteria = model[0]
 
     inputData = getProductSearchCriteria(criteria)
-    response = SDP().sendRequest(inputData, method[1],'products',session)
+    response = SDP().sendRequest(inputData, method[1],endpoints[1],session)
     
     if response['list_info']['row_count'] > 0  :
         return criteria
@@ -79,19 +80,12 @@ def createProduct(product, session):
     data = urlencode({"input_data": inputData}).encode()
 
     # TODO add logging here to know initial request is coming from this section
-    SDP().sendRequest(data, method[0],'products',session)
+    SDP().sendRequest(data, method[0],endpoints[1],session)
     return model
 
 # /////////////////////////
 # //////    USERS   ///////
 # /////////////////////////
-
-'''
-    check user exists in SDP
-'''
-def checkUserById(user, session):
-    response = SDP().sendRequest(user, method[2],'users', session)
-    print(response)
 
 
 '''
@@ -111,9 +105,10 @@ def checkuserByEmail(user,session):
     inputData = '''{}'''.format(data)
     data = urlencode({"input_data": inputData})
 
-    response = SDP().sendRequest(data,method[1],'users',session)
+    response = SDP().sendRequest(data,method[1],endpoints[0],session)
 
     if response['list_info']['row_count'] == 1:
+        print(response)
         return True
     else:
         print('check user by email. {} does not exist in SDP'.format(user))
@@ -121,32 +116,37 @@ def checkuserByEmail(user,session):
     
 
 def uploadUser(user,session):
-    
-    endpoint = 'users'
-
-    data = { "user":
+        
+    data = { "requester":
             {
                 "first_name" : user['name']['givenName'],
                 "email_id": user['primaryEmail'],
-                "is_technician" : "false",
+                "login_user": True,
                 "last_name" : user['name']['familyName'],
                 "name" : user['name']['fullName']
             }
     }# department info in users isn't always available
 
-    checkString = '_email-Archive'
+    # ignore archive accounts
+    checkString = '_ email-Archive'
     if checkString in user.get('primaryEmail'):
         return
     
     if user.get('organizations', '') != '':
-        data['user']['department'] = {"name":''}
-        data['user']['department']['name'] = user["organizations"][0]['department']
-        data['user']['jobtitle'] = user["organizations"][0]['title']
+        data['requester']['department'] = {"name":''}
+        data['requester']['department']['name'] = user["organizations"][0]['department']
+        data['requester']['job_title'] = user["organizations"][0]['title']
+
+    if user.get('relations', '') != '':
+        data['requester']['relations'] = user['primaryEmail']
 
     inputData = '''{}'''.format(data)
     data = urlencode({"input_data": inputData}).encode()
 
-    SDP().sendRequest(data,method[0],endpoint, session)
+    SDP().sendRequest(data,method[0],endpoints[0], session)
+
+    def updateRequester():
+        pass
 
 def uploadUsers(users,session):
     for user in users:

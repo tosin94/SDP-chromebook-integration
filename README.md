@@ -24,6 +24,8 @@ Scopes in use:
 2.	Software dependencies
 3.	Latest releases
 4.	API references
+5.  Gcloud cli setup (how its been used in the subcriber workflow)
+
 
 # Build and Test
 TODO: Describe and show how to build your code and run the tests. 

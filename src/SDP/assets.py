@@ -158,10 +158,16 @@ class SDPAssets:
                 # postData[root_key][key] = func(device[value], session)
                 postData[root_key][key] = func(device.get(value, ''), session)
 
-            mostRecentUser = device.get('recentUsers', '')
-            mostRecentUser = (mostRecentUser[0]['email']).split('@',1)[0] if mostRecentUser != '' else 'NO_USER'
+            recentUsers = device.get('recentUsers', '')
+            if recentUsers != '':
+                mostRecentUser = recentUsers[0].get('email','')
+                if mostRecentUser != '':
+                    mostRecentUser = mostRecentUser.split('@',1)[0]
+                else:
+                    mostRecentUser = 'NO_USER'
+            else:
+                mostRecentUser = 'NO_USER'
 
-            
             postData[root_key]['operating_system'] = self.opSYS(device.get('platformVersion', ''),device.get('osVersion',''))
             postData[root_key]['last_logged_user'] = self.normal(mostRecentUser,session)
             

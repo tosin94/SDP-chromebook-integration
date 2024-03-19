@@ -112,5 +112,3 @@ if __name__ == '__main__':
     # List all Chrome OS devices
     # method.list_all_chrome_os_devices()
     method.list_all_users()
-
-    #print('hecllo %s --> %s' % (service_account_file_path, your_domain))

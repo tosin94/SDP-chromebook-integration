@@ -41,7 +41,11 @@ class SDP:
                         status_code = tmp['response_status'][0]['status_code']
                     else:
                         status = tmp["response_status"]['status']
-                        status_code = tmp["response_status"]["messages"][0]["status_code"]
+                        #since manage engine simply don't have consistency...
+                        if 'messages' in tmp['response_status']:
+                            status_code = tmp["response_status"]["messages"][0]["status_code"]
+                        else:
+                            status_code = tmp["response_status"]["status_code"]
 
                     if status == 'failed':
                         if status_code != 4008:
@@ -79,4 +83,4 @@ if __name__ == '__main__':
         
     }
     inputData = '''{}'''.format(product)
-    # print(assets.sendRequest(urlencode(inputData)))
+    # print(assets.sendRequest(urlencode(inputData))
