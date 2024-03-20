@@ -15,7 +15,7 @@ class SDP:
     Encode your payload/data (if needed) before sending to this function
     Meethod will be POST or GET
     '''
-    def sendRequest(self, data, method, endpoint,session):
+    def sendRequest(self, data, method, endpoint,session, id = ''):
 
         endpoint = self.URL + endpoint
 
@@ -23,7 +23,8 @@ class SDP:
         request = {
             "POST": requests.Request(url= endpoint,data=data, headers=self.HEADER,method='POST'),
             "GET" : requests.Request(url=endpoint +'?{}'.format(data), headers=self.HEADER, method='GET'),
-            "NO_QUERY_PARAMS": requests.Request(url = endpoint + '/{}'.format(data), headers=self.HEADER, method='GET' )
+            "NO_QUERY_PARAMS": requests.Request(url = endpoint + '/{}'.format(data), headers=self.HEADER, method='GET' ),
+            "PUT": requests.Request(url= endpoint + '/{}'.format(id),data=data, headers=self.HEADER,method='PUT'),
         }
         httpRequest = request.get(method)
         httpRequest = session.prepare_request(httpRequest)
@@ -57,7 +58,7 @@ class SDP:
                     session.close()
                     print(httpE)
                     #TODO log the error
-                    exit(0)
+                    exit(1)
 
             return json.loads(res)
         

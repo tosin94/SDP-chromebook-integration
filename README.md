@@ -14,6 +14,7 @@ Scopes in use:
 -   SDPOnDemand.setup.READ
 -   SDPOnDemand.users.READ
 -   SDPOnDemand.users.CREATE
+-   SDPOnDemand.users.UPDATE
 
 
 

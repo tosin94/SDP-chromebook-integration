@@ -8,9 +8,9 @@ import requests
 '''
     0 -> POST, 1 --> GET, 2 --> NO_QUER_PARAMS
 '''
-method = ["POST","GET","NO_QUERY_PARAMS"]
+method = ["POST","GET","NO_QUERY_PARAMS","PUT"]
 
-endpoints = ["requesters", "products", "workstations"]
+endpoints = ["requesters", "products", "workstations", "users"]
 
 '''
     list products that are in the name field of the request, e.g list all Dell XPS 13's only
@@ -138,15 +138,31 @@ def uploadUser(user,session):
         data['requester']['job_title'] = user["organizations"][0]['title']
 
     if user.get('relations', '') != '':
-        data['requester']['relations'] = user['primaryEmail']
+        data['requester']['reporting_to'] = {'email_id': ''}
+        data['requester']['reporting_to']['email_id'] = user['relations'][0]['value']
 
     inputData = '''{}'''.format(data)
     data = urlencode({"input_data": inputData}).encode()
 
     SDP().sendRequest(data,method[0],endpoints[0], session)
 
-    def updateRequester():
-        pass
+def updateRequester(user_data, manager_id, session):
+    #Need ID of manager before trying to add the manager
+    '''
+        Use the email of the manager to get the ID and then use in data
+        also need Id of user to be updated. can also used email_id for manager
+    '''
+
+    data = {
+        "requester" : user_data
+    }
+
+    inputData = '''{}'''.format(data)
+    data = urlencode({"input_data": inputData}).encode()
+
+    response = SDP().sendRequest(data,method[3],endpoints[0], session,id=manager_id)
+    print(response)
+        
 
 def uploadUsers(users,session):
     for user in users:
