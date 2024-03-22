@@ -128,7 +128,7 @@ def uploadUser(user,session):
     }# department info in users isn't always available
 
     # ignore archive accounts
-    checkString = '_ email-Archive'
+    checkString = '_email-Archive'
     if checkString in user.get('primaryEmail'):
         return
     

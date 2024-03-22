@@ -96,7 +96,7 @@ class SDPAssets:
         
         data = self.buildData(destination,chromeDeviceData, session)
         for payload in data:
-            # print(payload)
+            assetTag = json.loads(payload)['workstation']['asset_tag']
             postData = urlencode({"input_data": payload}).encode()
             httpReq = requests.Request(url=url,data=postData,headers=ACCESS_HEADERS,method='POST')
             httpReq = session.prepare_request(httpReq)
@@ -114,7 +114,7 @@ class SDPAssets:
                             if operation tried to upload non-unique data... (check and skip)
                         '''
                         if resText["response_status"]["messages"][0]["status_code"] == 4008:
-                            print('Data already exists --> \n\n Data %s \n %s \n' %(response.text,payload))
+                            print('Data already exists --> \n\n Data %s \n %s \n' %(response.text,assetTag))
                             # TODO - log the input data, and email IT support
                             # TODO - code to alert IT on potential duplicate that has been skipped
                             # could do so by sending a ticket to IT support with the log file for duplicates
@@ -152,7 +152,7 @@ class SDPAssets:
         postData[root_key] = {}
 
         for device in chromedeviceData:
-            print(device['annotatedAssetId'])
+            # print(device['annotatedAssetId'])
             for key,value in self.keys.items():
                 func = switch.get(key,'prod')
                 # postData[root_key][key] = func(device[value], session)

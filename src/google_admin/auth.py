@@ -4,7 +4,7 @@ from dotenv import load_dotenv
 import os
 from src.SDP.assets import SDPAssets
 import src.SDP.SDP_API as SDP_API
-import requests,time
+import requests,time,json
 # from urllib.parse import quote_plus, quote
 
 load_dotenv()
@@ -13,6 +13,9 @@ class GoogleAdmin:
     '''
         Doc for googleapiclient
         https://github.com/googleapis/google-api-python-client/blob/main/docs/README.md
+        TODO - change workflow where this module only returns data
+        TODO - try/catch to process and log errors on all netwrok requests
+        TODO - pull all the data first into a DB and then process into SDP
     '''
     def __init__(self, service_account_file, customerId, delegate):
         self.SCOPES = [
@@ -33,6 +36,7 @@ class GoogleAdmin:
         request_no = 0
 
         while True:
+            
             # Retrieve a page of Chrome OS devices
             response = self.service.chromeosdevices().list(
                 customerId=self.customer,
@@ -75,7 +79,7 @@ class GoogleAdmin:
                 maxResults=100,  # Adjust the number of results per page as needed
                 pageToken=page_token,
                 viewType="admin_view",
-                # orgUnitPath = "/Tearfund USERS/Tearfund/Finance & IT/Global Logistics"
+                # make sure t-family isn't part of it
             ).execute()
 
             # Process the users on the current page
@@ -99,6 +103,33 @@ class GoogleAdmin:
                 break
         session.close()
         
+    def getUser(self, user)-> str:
+        sdp_u = SDP_API
+        session = requests.Session()
+
+        response = self.service.users().get(
+            userKey= user,
+            projection = 'full',
+            viewType="admin_view"
+        ).execute()
+
+        sdp_u.uploadUser(response,session)
+        # Process the users on the current page
+        # print(json.dumps(response))
+        return json.dumps(response)
+    
+        
+    def getAsset(self, asset)-> str:
+        print(asset)
+        # urlQuery = 'status:provisioned'
+
+        # response = self.service.chromeosdevices().list(
+        #         customerId=self.customer,
+        #         maxResults=100,  # Adjust the number of results per page as needed
+        #         query = urlQuery
+               
+        #     ).execute()
+        # return json.dumps(response)
 
 if __name__ == '__main__':
     # Set the necessary parameters
@@ -111,4 +142,5 @@ if __name__ == '__main__':
 
     # List all Chrome OS devices
     # method.list_all_chrome_os_devices()
-    method.list_all_users()
+    # method.list_all_users()
+    # method.getUser('sam.omotayo@tearfund.org')

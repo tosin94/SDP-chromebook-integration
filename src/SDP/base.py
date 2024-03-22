@@ -58,6 +58,8 @@ class SDP:
                     session.close()
                     print(httpE)
                     #TODO log the error
+                    if "requesters" in endpoint:
+                        return
                     exit(1)
 
             return json.loads(res)
