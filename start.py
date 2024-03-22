@@ -81,7 +81,7 @@ importAssets = args.get(KEYS[0], None)
 assetTag = args.get(KEYS[1], None)
 
 if importAssets and assetTag == None:
-    # import all assets
+    # import all assetss
     sdp.list_all_chrome_os_devices()
     exit()
 
