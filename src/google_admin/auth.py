@@ -143,4 +143,3 @@ if __name__ == '__main__':
     # List all Chrome OS devices
     # method.list_all_chrome_os_devices()
     # method.list_all_users()
-    # method.getUser('sam.omotayo@tearfund.org')
