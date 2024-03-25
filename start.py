@@ -1,9 +1,13 @@
 import argparse
 import src.google_admin.auth as SDP
 from dotenv import load_dotenv
-import os
+import os,sys
 
-load_dotenv
+load_dotenv()
+
+if sys.prefix == sys.base_prefix:
+    print('please activate the virtual environment and run again')
+    exit()
 
 service_account_file_path = os.getenv('creds')
 customer = os.getenv('customerId')
