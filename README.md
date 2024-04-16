@@ -17,6 +17,7 @@ API Scopes in use:
 -   SDPOnDemand.users.READ
 -   SDPOnDemand.users.CREATE
 -   SDPOnDemand.users.UPDATE
+-   SDPOnDemand.assets.UPDATE
 
 
 ***NOTE*** - Code needs to be moved to main repo

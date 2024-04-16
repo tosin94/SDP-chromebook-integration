@@ -2,7 +2,7 @@
     authentication to service desk REST API - no need for a http server as self client is being used
     self client creates the initial grant token which can then be used to get the access and refresh tokens
     scopes in use:
-        SDPOnDemand.assets.CREATE,SDPOnDemand.assets.READ,SDPOnDemand.setup.CREATE,SDPOnDemand.setup.READ,SDPOnDemand.users.READ,SDPOnDemand.users.CREATE
+        SDPOnDemand.assets.CREATE,SDPOnDemand.assets.READ,SDPOnDemand.setup.CREATE,SDPOnDemand.setup.READ,SDPOnDemand.users.READ,SDPOnDemand.users.CREATE,SDPOnDemand.assets.UPDATE
     
     grant token is created at https://api-console.zoho.uk/ under the manage-engine 
     admin account which has access to SDP and endpoint central

@@ -1,5 +1,7 @@
 from src.SDP.base import SDP
 from urllib.parse import urlencode
+import operator as op
+import traceback
 
 # TODO temp delete later 
 import requests
@@ -116,7 +118,20 @@ def checkuserByEmail(user,session):
     
 
 def uploadUser(user,session):
-        
+    # ignore archive, suspended accounts and tf-fam
+    checkStrings = ["_email-Archive","tearfundfamily", "affinis"]
+    for string in checkStrings:
+        if op.contains(user.get('primaryEmail'), string):
+            return
+    
+    if user.get('suspended'):
+        return
+    
+    orgUnitPath = user.get('orgUnitPath', '').replace(' ', '').upper()
+    orgCheck = "Team (Shared) mailboxes".upper().replace(' ', '')
+    if orgCheck in orgUnitPath:
+        return
+
     data = { "requester":
             {
                 "first_name" : user['name']['givenName'],
@@ -127,30 +142,31 @@ def uploadUser(user,session):
             }
     }# department info in users isn't always available
 
-    # ignore archive accounts
-    checkString = '_email-Archive'
-    if checkString in user.get('primaryEmail'):
-        return
-    
-    if user.get('organizations', '') != '':
-        data['requester']['department'] = {"name":''}
-        data['requester']['department']['name'] = user["organizations"][0]['department']
-        data['requester']['job_title'] = user["organizations"][0]['title']
+    try:
+        if user.get('organizations', '') != '':
+            data['requester']['department'] = {"name":''}
+            data['requester']['department']['name'] = user["organizations"][0]['department']
+            data['requester']['job_title'] = user["organizations"][0]['title']
 
-    if user.get('relations', '') != '':
-        data['requester']['reporting_to'] = {'email_id': ''}
-        data['requester']['reporting_to']['email_id'] = user['relations'][0]['value']
+        if user.get('relations', '') != '':
+            data['requester']['reporting_to'] = {'email_id': ''}
+            data['requester']['reporting_to']['email_id'] = user['relations'][0]['value']
+    except KeyError as keyErr:
+        # TODO - log key error 
+        traceback.print_exc()
 
     inputData = '''{}'''.format(data)
     data = urlencode({"input_data": inputData}).encode()
 
-    SDP().sendRequest(data,method[0],endpoints[0], session)
+    res = SDP().sendRequest(data,method[0],endpoints[0], session)
+    if res:
+        print(f"Response {res}")
 
-def updateRequester(user_data, manager_id, session):
+def updateRequesterManager(user_data, manager_id, session):
     #Need ID of manager before trying to add the manager
     '''
         Use the email of the manager to get the ID and then use in data
-        also need Id of user to be updated. can also used email_id for manager
+        also need Id of user to be updated. can also use email_id for manager
     '''
 
     data = {

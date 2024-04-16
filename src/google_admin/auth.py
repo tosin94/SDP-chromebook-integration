@@ -79,7 +79,6 @@ class GoogleAdmin:
                 maxResults=100,  # Adjust the number of results per page as needed
                 pageToken=page_token,
                 viewType="admin_view",
-                # make sure t-family isn't part of it
             ).execute()
 
             # Process the users on the current page
@@ -116,7 +115,7 @@ class GoogleAdmin:
         sdp_u.uploadUser(response,session)
         # Process the users on the current page
         # print(json.dumps(response))
-        return json.dumps(response)
+        # return json.dumps(response)
     
         
     def getAsset(self, asset)-> str:
