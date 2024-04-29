@@ -88,7 +88,7 @@ class SDPAssets:
             "version": osV
         }
 
-    def upload(self,destination,chromeDeviceData,session):
+    def upload(self,destination,chromeDeviceData,session,**extraArgs):
 
         endpoint = self.module.get(destination)[0]
         url = self.BASE_URL + endpoint
@@ -97,6 +97,17 @@ class SDPAssets:
         
         data = self.buildData(destination,chromeDeviceData, session)
         for payload in data:
+            try:
+                payloadDict = json.loads(payload)
+                if extraArgs["changeState"]:
+                    # change the state to in use
+                    payloadDict["workstation"]["state"] = { "name": extraArgs["state"] }
+                    payloadDict["workstation"]["user"] = {"email_id": extraArgs["user"]}
+                    payload = json.dumps(payloadDict)
+            except Exception as err:
+                print(err)
+                print("continuing")
+
             assetTag = json.loads(payload)['workstation']['asset_tag']
             postData = urlencode({"input_data": payload}).encode()
             httpReq = requests.Request(url=url,data=postData,headers=ACCESS_HEADERS,method='POST')
@@ -177,8 +188,22 @@ class SDPAssets:
 
             yield json.dumps(postData)
 
-    def importSingleChromeAsset():
-        pass
+    def importSingleChromeAsset(self, asset, state, assigned_user):
+        from src.google_admin.auth import GoogleAdmin
+        service_account_file_path = os.getenv('creds')
+        customer = os.getenv('customerId')
+        delegate = os.getenv('delegated_admin')
+        google = GoogleAdmin(service_account_file_path,customer,delegate)
+        # deviceData = []
+
+        response = google.getAsset(asset)
+        assetDetails = response["response"]["chromeosdevices"]
+        # deviceData.append(assetDetails)
+        session = response["session"]
+        
+        self.upload("workstations",assetDetails,session,state=state, changeState = True, user=assigned_user)
+
+        
 
     def updateAssets(self):
 
@@ -301,7 +326,7 @@ class SDPAssets:
                     return ''
                 if date_ == '':
                     return ''
-                val = re.search('\d{2}/\d{2}/\d{4}',date_)
+                val = re.search(r"\d{2}/\d{2}/\d{4}",date_)
                 if val:
                     res = val.group()
                     res = datetime.strptime(res, '%d/%m/%Y')
@@ -425,7 +450,5 @@ class SDPAssets:
                 raise err
 
 
-        buildEditdData()
+        # buildEditdData()
 
-if __name__ == '__main__':
-    SDPAssets().updateAssets()

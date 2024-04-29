@@ -1,14 +1,16 @@
-import argparse
-import src.google_admin.auth as SDP
 from dotenv import load_dotenv
-import os
+import argparse, os
+from src.google_admin.auth import GoogleAdmin
+from src.SDP.assets import SDPAssets
+
 
 load_dotenv()
 
 service_account_file_path = os.getenv('creds')
 customer = os.getenv('customerId')
 delegate = os.getenv('delegated_admin')
-sdp = SDP.GoogleAdmin(service_account_file_path,customer,delegate)
+
+SDP_assets = SDPAssets()
 
 
 ARGS = [
@@ -17,7 +19,9 @@ ARGS = [
     '--importUsers', 
     '--user', 
     '--updateUser', 
-    '--updateUsers'
+    '--updateUsers',
+    '--state',
+    '--assigned_user'
     ]
 KEYS = [(key.replace('--', '')) for key in ARGS]
 
@@ -41,12 +45,52 @@ assetGroup.add_argument(
     choices=['true', 'false']
 )
 
-assetGroup.add_argument(
-    ARGS[1],
-    help= 'e.g --assetTag TF005400',
-    default=None,
+# assetGroup.add_argument(
+#     ARGS[1],
+#     help= 'e.g --assetTag TF005400',
+#     default=None,
+#     type=str
+# )
+
+'''
+Argument group
+'''
+singleAssetGroup = AssetParser.add_argument_group(
+    title='Import Single Asset',
+    description= "Imports a single asset. e.g python start.py assets --assetTag <tfno> --state 'state' --assigned_user 'user@domain.com'"
+    
+    )
+singleAssetGroup.add_argument(
+        ARGS[1],
+        type=str,
+        help='e.g --assetTag TF005400',
+    )
+singleAssetGroup.add_argument(
+    ARGS[6],
+    help= 'e.g --state "In Store" || In Use . if state = in use, please provide user it is to be assigned to',
+    default="In Store",
+    type=str,
+    choices=['In Store', 'In Use']
+    
+)
+singleAssetGroup.add_argument(
+    ARGS[7],
+    help= "--assigned_user <user> e.g python start.py assets --importAssets --assetTag TFxxxxx --state in use --assigned_user user@domain.com",
     type=str
 )
+
+# assetGroup.add_argument(
+#     ARGS[6],
+#     help= "e.g --state In Store || In Use . if state = in use, please provide user it is to be assigned to",
+#     default="in store",
+#     type=str
+# )
+# assetGroup.add_argument(
+#     ARGS[7],
+#     help= "--assigned_user <user> e.g python start.py assets --importAssets --assetTag TFxxxxx --state in use --assigned_user user@domain.com",
+#     default="None",
+#     type=str
+# )
 
 '''
     USER PARSER
@@ -71,12 +115,14 @@ userGroup.add_argument(
     type=str
 )
 
-args = vars(parser.parse_args())
 
+args = vars(parser.parse_args())
 '''
     process args
 
 '''
+sdp = GoogleAdmin(service_account_file_path,customer,delegate)
+
 importAssets = args.get(KEYS[0], None)
 assetTag = args.get(KEYS[1], None)
 
@@ -87,8 +133,15 @@ if importAssets and assetTag == None:
 
 elif importAssets and assetTag != None:
     # import an asset
-    sdp.getAsset(assetTag)
-    print('This function is not available at the moment')
+    state = args.get(KEYS[6], None)
+    assigned_user = args.get(KEYS[7], None)
+
+    if state.upper() == "in use".upper() and assigned_user == None:
+        print("Please enter a value for assigned user. use python start.py assets --help for help")
+        exit(1)
+    else:
+        SDP_assets.importSingleChromeAsset(assetTag,state,assigned_user)
+        
     exit()
 
 importUsers = args.get(KEYS[2], None)

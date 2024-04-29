@@ -1,8 +1,8 @@
 from google.oauth2 import service_account
 from googleapiclient.discovery import build
+from src.SDP.assets import SDPAssets
 from dotenv import load_dotenv
 import os
-from src.SDP.assets import SDPAssets
 import src.SDP.SDP_API as SDP_API
 import requests,time,json
 # from urllib.parse import quote_plus, quote
@@ -119,16 +119,17 @@ class GoogleAdmin:
     
         
     def getAsset(self, asset)-> str:
-        print(asset)
-        # urlQuery = 'status:provisioned'
+        session = requests.Session()
+        urlQuery = f'status:provisioned asset_id:{asset}'
 
-        # response = self.service.chromeosdevices().list(
-        #         customerId=self.customer,
-        #         maxResults=100,  # Adjust the number of results per page as needed
-        #         query = urlQuery
+        response = self.service.chromeosdevices().list(
+                customerId=self.customer,
+                maxResults=1,  # Adjust the number of results per page as needed
+                query = urlQuery
                
-        #     ).execute()
-        # return json.dumps(response)
+            ).execute()
+        return {"response": response , "session": session}
+        # print(json.dumps(response))
 
 if __name__ == '__main__':
     # Set the necessary parameters

@@ -17,9 +17,9 @@ httplib2==0.22.0
 idna==3.6
 isort==5.13.2
 mccabe==0.7.0
-numpy==1.24.4
+numpy==1.26.4
 oauthlib==3.2.2
-pandas==2.0.3
+pandas==2.2.2
 platformdirs==4.2.0
 proto-plus==1.23.0
 protobuf==4.25.3
