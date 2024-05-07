@@ -1,5 +1,5 @@
 from src.auth.SDP_init import auth
-import json, os
+import json, os,sys
 from dotenv import load_dotenv
 from urllib.error import HTTPError
 from urllib.parse import urlencode, parse_qs
@@ -157,12 +157,14 @@ class SDPAssets:
             "location" : self.normal,
             "serial_number": self.normal,
             "model" : self.prod,
-            "memory": self.memory
+            "memory": self.memory,
+            "mac_address": self.normal
         }
         
         postData = dict()
         postData[root_key] = {}
 
+        # TODO - add more fields to be imported, mirror with winodws data in SDP
         for device in chromedeviceData:
             # print(device['annotatedAssetId'])
             for key,value in self.keys.items():
@@ -179,7 +181,15 @@ class SDPAssets:
                     mostRecentUser = 'NO_USER'
             else:
                 mostRecentUser = 'NO_USER'
+            # cpuInfo = device.get("cpuInfo",[''])[0]
+            # if cpuInfo != '':
+            #     cpu_model = cpuInfo.get("model",'')
+            #     clock_speed = cpuInfo.get("maxClockSpeedKhz", '')
+            #     cores = len(cpuInfo.get("logicalCpus",['']))
 
+                # postData[root_key]['processors'] = [{"name" : cpu_model,"speed": clock_speed, "number_of_cores": cores}]
+                
+                
             postData[root_key]['operating_system'] = self.opSYS(device.get('platformVersion', ''),device.get('osVersion',''))
             postData[root_key]['last_logged_user'] = self.normal(mostRecentUser,session)
             
@@ -206,6 +216,10 @@ class SDPAssets:
         
 
     def updateAssets(self):
+        from src.google_admin.auth import GoogleAdmin
+        service_account_file_path = os.getenv('creds')
+        customer = os.getenv('customerId')
+        delegate = os.getenv('delegated_admin')
 
         filename = './IT_ASSET_DB.csv'
         path = './assetRes.json'
@@ -216,10 +230,17 @@ class SDPAssets:
         def getWorkstationData():
 
             # get and save asset data
+            # TODO - list only chromebooks
             data = {
                 "list_info": {
-                    "row_count": 10,
-                    "page" : 1
+                    "row_count": 100,
+                    "page" : 1,
+                    "search_criteria" : {
+                        "field": "operating_system.os",
+                        "condition": "not contains",
+                        "values": ["windows", "Windows","mac","macos"]
+                    },
+                    "fields_required": ["id","name"]
                 
                 }
             }
@@ -249,7 +270,11 @@ class SDPAssets:
                         httpResponse = session.send(httpReq).text
                         httpResponse = json.loads(httpResponse)
 
-                        status = httpResponse["response_status"]["status"]
+                        if isinstance(httpResponse.get('response_status',''), list):
+                            status = httpResponse["response_status"][0]["status"]
+                        else:
+                            status = httpResponse["response_status"]["status"]
+
                         if status == "failed":
                             # if httpResponse['response_status'][0]['status_code'] != 2000:
                             raise requests.HTTPError(request=httpReq, response=httpResponse)
@@ -278,7 +303,118 @@ class SDPAssets:
                         
 
             except requests.HTTPError as httpE:
+                # TODO - log http error to for or elsewhere
                 print(httpE)
+                exit()
+
+        def buildAndSendUpdateData():
+            getWorkstationData()
+            time.sleep(30) #just in case we are sending too many requests
+            def toTimestamp(date_):
+                if date_ != '':
+                    date_ = int(datetime.strptime(date_, '%Y-%m-%dT%H:%M:%S.%f%z').timestamp()*1000)
+                else:
+                    return ''
+                return date_
+            
+            try:
+                google = GoogleAdmin(service_account_file_path,customer,delegate)
+
+                with open(path, 'r') as assetsFile:
+                    assets = json.load(assetsFile)
+                    arr = assets['assets']
+                    count = 0
+                    for row in arr:
+                        key = list(row.keys())[0]
+                        asset = row.get(key)
+                        try:
+                            # get chromedata from google
+                            response,session = google.getAsset(asset).values()
+                            device = response.get("chromeosdevices",[''])[0]
+                            if(device == ''):
+                                # TODO log response 
+                                print(f"\nskipped {asset}\n")
+                                continue
+
+                            os,version = device.get('platformVersion', ''),device.get('osVersion','')
+                            recent_activity = toTimestamp(device.get("lastSync",''))
+                            last_logged_user = device.get("recentUsers",[{"email": ''}])[0].get('email','')
+                            enrollmentTime = toTimestamp(device.get("firstEnrollmentTime", ''))
+                            lastReboot = toTimestamp(device.get("osUpdateStatus", {}).get("rebootTime", ''))
+                            updateStatus = device.get("osUpdateStatus", {}).get("state", '')
+                            updatesUntil = device.get("autoUpdateExpiration", '0') # comes as a timestamp
+                            assetType = (lambda device: "Flex" if "FLEX" in device.get("orgUnitPath", '').upper() else "Chromebook")(device)
+
+                            data = { "workstation":
+                                    {
+                                        "operating_system":{
+                                            "os": os,
+                                            "version":version
+                                        },
+                                        "workstation_udf_fields":{
+                                            "udf_date1": {"value": recent_activity}, # recent activity
+                                            "udf_char1": assetType, # asset type
+                                            "udf_date2" : {"value": updatesUntil},
+                                            "udf_date3" : {"value" : enrollmentTime}, # enrollment time
+                                            "udf_date4" : {"value" :lastReboot}, # last reboot
+                                            "udf_char2" : updateStatus, 
+                                        },
+                                        "last_logged_user": last_logged_user,
+
+                                    }
+                                }
+                            data = '''{}'''.format(data)
+                            input_data = urlencode({"input_data": data}).encode()
+
+                            try:
+                                url = self.BASE_URL + endpoint + f'/{key}'
+
+                                request = requests.Request(
+                                    url=url,
+                                    headers=self.HEADER,
+                                    method='PUT',
+                                    data=input_data
+                                )
+                                httpReq = session.prepare_request(request)
+                                httpResponse = session.send(httpReq)
+                                response = json.loads(httpResponse.text)
+
+                                status = response["response_status"]["status"]
+
+                                if status == "failed":
+                                    print(f"{asset} ==> {response}")
+                                    # TODO - log response, remove pass
+                                    pass
+                                   
+
+                                elif status == "success":
+                                    # print(response)
+                                    pass
+
+                                count += 1
+                                if count >= 100:
+                                    print("waiting 60 seconds")
+                                    time.sleep(60)
+                                    count = 0
+
+                            # TODO - log all these errors and stop script execution only where necessary
+                            
+                            except requests.HTTPError as err:
+                                raise err
+                            
+                            except Exception as err:
+                                session.close()
+                                raise err
+                            
+
+
+                        except Exception as err:
+                            raise err
+
+            except Exception as err:
+                raise err
+    
+        buildAndSendUpdateData()
 
         def buildEditdData():
 
@@ -302,7 +438,7 @@ class SDPAssets:
                             warranty = assetData.get('Warranty End', '')
                             model = assetData.get('Model', '')
 
-                            rtn = sendData(key,expiry,user,warranty,asset,model,count) 
+                            rtn = sendDataCSV(key,expiry,user,warranty,asset,model,count) 
                             if rtn != None:                          
                                 count = rtn
                             # print(assetData.get('DEVICE type'))
@@ -316,7 +452,7 @@ class SDPAssets:
 
         # construct data to send to manage engine
         
-        def sendData(id,expiry,user,warranty,tfno,model,count) -> int:
+        def sendDataCSV(id,expiry,user,warranty,tfno,model,count) -> int:
             
             url = self.BASE_URL + endpoint + f'/{id}'
 
@@ -449,6 +585,6 @@ class SDPAssets:
                 session.close()
                 raise err
 
-
-        # buildEditdData()
-
+if __name__ == "__main__":
+    assets = SDPAssets()
+    assets.updateAssets()

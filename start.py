@@ -12,6 +12,11 @@ delegate = os.getenv('delegated_admin')
 
 SDP_assets = SDPAssets()
 
+ 
+'''
+    TODO
+    - Add asset_type as a default value for adding assets, also add to bulk importing (here and assets.py)
+'''
 
 ARGS = [
     '--importAssets', 
