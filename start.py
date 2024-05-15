@@ -26,7 +26,8 @@ ARGS = [
     '--updateUser', 
     '--updateUsers',
     '--state',
-    '--assigned_user'
+    '--assigned_user',
+    '--updateAssets'
     ]
 KEYS = [(key.replace('--', '')) for key in ARGS]
 
@@ -49,6 +50,8 @@ assetGroup.add_argument(
     default="true",
     choices=['true', 'false']
 )
+
+updateGroup = AssetParser.add_argument_group()
 
 # assetGroup.add_argument(
 #     ARGS[1],
@@ -83,6 +86,20 @@ singleAssetGroup.add_argument(
     help= "--assigned_user <user> e.g python start.py assets --importAssets --assetTag TFxxxxx --state in use --assigned_user user@domain.com",
     type=str
 )
+
+# updating all assets 
+# updateAllGroup = AssetParser.add_argument_group(
+#     title="Update all assets",
+#     description="Updates all Chrome and flex assets currently held in SDP, will not add new devices"
+# )
+
+updateGroup.add_argument(
+    ARGS[8],
+    help="--updateAssets default value is True. Full example pyton start.py assets --updateAssets",
+    default="true",
+    choices=['true','false']
+)
+
 
 # assetGroup.add_argument(
 #     ARGS[6],
@@ -130,8 +147,9 @@ sdp = GoogleAdmin(service_account_file_path,customer,delegate)
 
 importAssets = args.get(KEYS[0], None)
 assetTag = args.get(KEYS[1], None)
+updateAssets = args.get(KEYS[8], None)
 
-if importAssets and assetTag == None:
+if importAssets and assetTag == None and updateAssets != "false":
     # import all assetss
     sdp.list_all_chrome_os_devices()
     exit()
@@ -147,8 +165,9 @@ elif importAssets and assetTag != None:
     else:
         SDP_assets.importSingleChromeAsset(assetTag,state,assigned_user)
         
-    exit()
-
+elif updateAssets == 'true':
+    SDP_assets.updateAssets()
+        
 importUsers = args.get(KEYS[2], None)
 user = args.get(KEYS[3], None)
 

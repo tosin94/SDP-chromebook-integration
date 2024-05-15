@@ -131,6 +131,24 @@ class GoogleAdmin:
         return {"response": response , "session": session}
         # print(json.dumps(response))
 
+
+
+
+
+
+def testCloudIdentity(service_account_file, customerId, delegate):
+        SCOPES = ["https://www.googleapis.com/auth/cloud-identity.devices.readonly"]
+        delegate = delegate
+        credentials = service_account.Credentials.from_service_account_file(
+        service_account_file, scopes=SCOPES, subject=delegate )
+        service = build('cloudidentity', 'v1', credentials=credentials)
+        customer = customerId
+
+        response = service.devices().list(
+        ).execute()
+
+        print(response)
+
 if __name__ == '__main__':
     # Set the necessary parameters
     service_account_file_path = os.getenv('creds')
@@ -138,8 +156,9 @@ if __name__ == '__main__':
     delegate = os.getenv('delegated_admin')
 
     # Create an instance of the GoogleAdmin class
-    method = GoogleAdmin(service_account_file_path, customer, delegate)
+    # method = GoogleAdmin(service_account_file_path, customer, delegate)
 
     # List all Chrome OS devices
     # method.list_all_chrome_os_devices()
     # method.list_all_users()
+    # testCloudIdentity(service_account_file_path,customer,delegate)

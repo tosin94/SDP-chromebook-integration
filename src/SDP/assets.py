@@ -230,7 +230,6 @@ class SDPAssets:
         def getWorkstationData():
 
             # get and save asset data
-            # TODO - list only chromebooks
             data = {
                 "list_info": {
                     "row_count": 100,
