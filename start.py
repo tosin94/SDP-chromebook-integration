@@ -154,7 +154,7 @@ if importAssets and assetTag == None and updateAssets != "false":
     sdp.list_all_chrome_os_devices()
     exit()
 
-elif importAssets and assetTag != None:
+elif assetTag != None:
     # import an asset
     state = args.get(KEYS[6], None)
     assigned_user = args.get(KEYS[7], None)
@@ -164,7 +164,7 @@ elif importAssets and assetTag != None:
         exit(1)
     else:
         SDP_assets.importSingleChromeAsset(assetTag,state,assigned_user)
-        
+
 elif updateAssets == 'true':
     SDP_assets.updateAssets()
         
