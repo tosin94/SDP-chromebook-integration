@@ -149,7 +149,7 @@ importAssets = args.get(KEYS[0], None)
 assetTag = args.get(KEYS[1], None)
 updateAssets = args.get(KEYS[8], None)
 
-if importAssets and assetTag == None and updateAssets != "false":
+if importAssets and assetTag == None and updateAssets != "true":
     # import all assetss
     sdp.list_all_chrome_os_devices()
     exit()
