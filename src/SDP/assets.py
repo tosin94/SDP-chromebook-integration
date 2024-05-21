@@ -308,7 +308,8 @@ class SDPAssets:
 
         def buildAndSendUpdateData():
             getWorkstationData()
-            time.sleep(30) #just in case we are sending too many requests
+            print('Collected workstation data...\n Now Sleeping for 60 seconds before carryng on')
+            time.sleep(60) #just in case we are sending too many requests
             def toTimestamp(date_):
                 if date_ != '':
                     date_ = int(datetime.strptime(date_, '%Y-%m-%dT%H:%M:%S.%f%z').timestamp()*1000)
@@ -402,6 +403,7 @@ class SDPAssets:
                                 raise err
                             
                             except Exception as err:
+                                # log the response
                                 session.close()
                                 raise err
                             
@@ -473,7 +475,7 @@ class SDPAssets:
             def convert_u(user):
                 if not isinstance(user, str):
                     return '' #change to default user
-                
+                domain = '@' + os.getenv('domain')
                 # transform user START
                 user = user.replace('`','')
                 user = user.replace("'",'')
@@ -497,12 +499,12 @@ class SDPAssets:
                     pass
             
                 elif "." in user:
-                    user += '@tearfund.org'
+                    user += domain
 
 
                 elif " " in user:
                     user = user.replace(" ", ".")
-                    user += '@tearfund.org'
+                    user += domain
 
                 else:
                     # in case other conditions are missed

@@ -83,7 +83,7 @@ singleAssetGroup.add_argument(
 )
 singleAssetGroup.add_argument(
     ARGS[7],
-    help= "--assigned_user <user> e.g python start.py assets --importAssets --assetTag TFxxxxx --state in use --assigned_user user@domain.com",
+    help= "--assigned_user <user> e.g python start.py assets --assetTag TFxxxxx --state in use --assigned_user user@domain.com",
     type=str
 )
 
@@ -95,8 +95,8 @@ singleAssetGroup.add_argument(
 
 updateGroup.add_argument(
     ARGS[8],
-    help="--updateAssets default value is True. Full example pyton start.py assets --updateAssets",
-    default="true",
+    help="--updateAssets default value is None. Full example pyton start.py assets --updateAssets",
+    default="None",
     choices=['true','false']
 )
 
@@ -151,6 +151,8 @@ updateAssets = args.get(KEYS[8], None)
 
 if importAssets and assetTag == None and updateAssets != "true":
     # import all assetss
+    # TODO - log and print
+    print("Importing all assets")
     sdp.list_all_chrome_os_devices()
     exit()
 
@@ -166,13 +168,18 @@ elif assetTag != None:
         SDP_assets.importSingleChromeAsset(assetTag,state,assigned_user)
 
 elif updateAssets == 'true':
+    # TODO - log and print
+    print("updating all assets")
     SDP_assets.updateAssets()
+    exit()
         
 importUsers = args.get(KEYS[2], None)
 user = args.get(KEYS[3], None)
 
 if importUsers and user == None:
     # import all users
+    # TODO - log and print
+    print("Imporing all users")
     sdp.list_all_users()
     exit()
 
