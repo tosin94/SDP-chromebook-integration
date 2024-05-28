@@ -1,10 +1,10 @@
 from google.oauth2 import service_account
 from googleapiclient.discovery import build
+from src.SDP.assets import SDPAssets
 from dotenv import load_dotenv
 import os
-from src.SDP.assets import SDPAssets
 import src.SDP.SDP_API as SDP_API
-import requests,time
+import requests,time,json
 # from urllib.parse import quote_plus, quote
 
 load_dotenv()
@@ -13,6 +13,9 @@ class GoogleAdmin:
     '''
         Doc for googleapiclient
         https://github.com/googleapis/google-api-python-client/blob/main/docs/README.md
+        TODO - change workflow where this module only returns data
+        TODO - try/catch to process and log errors on all netwrok requests
+        TODO - pull all the data first into a DB and then process into SDP
     '''
     def __init__(self, service_account_file, customerId, delegate):
         self.SCOPES = [
@@ -33,6 +36,7 @@ class GoogleAdmin:
         request_no = 0
 
         while True:
+            
             # Retrieve a page of Chrome OS devices
             response = self.service.chromeosdevices().list(
                 customerId=self.customer,
@@ -75,7 +79,6 @@ class GoogleAdmin:
                 maxResults=100,  # Adjust the number of results per page as needed
                 pageToken=page_token,
                 viewType="admin_view",
-                # orgUnitPath = "/Tearfund USERS/Tearfund/Finance & IT/Global Logistics"
             ).execute()
 
             # Process the users on the current page
@@ -99,6 +102,52 @@ class GoogleAdmin:
                 break
         session.close()
         
+    def getUser(self, user)-> str:
+        sdp_u = SDP_API
+        session = requests.Session()
+
+        response = self.service.users().get(
+            userKey= user,
+            projection = 'full',
+            viewType="admin_view"
+        ).execute()
+
+        sdp_u.uploadUser(response,session)
+        # Process the users on the current page
+        # print(json.dumps(response))
+        # return json.dumps(response)
+    
+        
+    def getAsset(self, asset)-> str:
+        session = requests.Session()
+        urlQuery = f'status:provisioned asset_id:{asset}'
+
+        response = self.service.chromeosdevices().list(
+                customerId=self.customer,
+                maxResults=1,  # Adjust the number of results per page as needed
+                query = urlQuery
+               
+            ).execute()
+        return {"response": response , "session": session}
+        # print(json.dumps(response))
+
+
+
+
+
+
+def testCloudIdentity(service_account_file, customerId, delegate):
+        SCOPES = ["https://www.googleapis.com/auth/cloud-identity.devices.readonly"]
+        delegate = delegate
+        credentials = service_account.Credentials.from_service_account_file(
+        service_account_file, scopes=SCOPES, subject=delegate )
+        service = build('cloudidentity', 'v1', credentials=credentials)
+        customer = customerId
+
+        response = service.devices().list(
+        ).execute()
+
+        print(response)
 
 if __name__ == '__main__':
     # Set the necessary parameters
@@ -107,10 +156,9 @@ if __name__ == '__main__':
     delegate = os.getenv('delegated_admin')
 
     # Create an instance of the GoogleAdmin class
-    method = GoogleAdmin(service_account_file_path, customer, delegate)
+    # method = GoogleAdmin(service_account_file_path, customer, delegate)
 
     # List all Chrome OS devices
     # method.list_all_chrome_os_devices()
-    method.list_all_users()
-
-    #print('hecllo %s --> %s' % (service_account_file_path, your_domain))
+    # method.list_all_users()
+    # testCloudIdentity(service_account_file_path,customer,delegate)
